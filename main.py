@@ -133,6 +133,14 @@ class LibraryApp:
         self.load_button = tk.Button(root, text='Загрузить список книг из файла', command = self.ui_load_books)
         self.load_button.pack(pady=5)
         
+        #кнопка для изменения статуса прочтения
+        self.read_button = tk.Button(root, text='Отметить как прочитано/непрочитано', command=self.ui_mark_as_read)
+        self.read_button.pack(pady=5)
+        
+        #кнопка для ручного сохранения в файл
+        self.save_button = tk.Button(root, text='Сохранить библиотеку в файл', command=self.ui_save_books)
+        self.save_button.pack(pady=5)
+        
         #обновляем список книг на экране при старте
         self.update_listbox()
         
@@ -174,6 +182,25 @@ class LibraryApp:
         self.update_listbox()
         
         messagebox.showinfo('Готово', 'Список книг успешно загружен из файла')
+        
+    #метод для смены статуса прочтения выбранной книги
+    def ui_mark_as_read(self):
+        selected_index = self.books_listbox.curselection()
+        
+        if not selected_index:
+            messagebox.showwarning('Ошибка', 'Выберите книгу из списка')
+            return
+        book = self.library.books[selected_index[0]]
+        self.library.mark_as_read(book.title)
+        
+        #Автоматическое сохранение изменений в файл и обновление экрана
+        self.library.save_to_file()
+        self.update_listbox()
+        messagebox.showinfo('Готово', f'Статус книги "{book.title}" успешно изменён')
+        
+    #Метод для ручного сохранения текущего состояния в файл
+    def ui_save_books(self):
+        
         
         
     #метод для добавления заметок
