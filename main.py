@@ -123,6 +123,10 @@ class LibraryApp:
         self.notes_button = tk.Button(root, text='Заметки к книге', command=self.ui_open_notes)
         self.notes_button.pack(pady=5)
         
+        #кнопка ручной загрузки книг из файла
+        self.load_button = tk.Button(root, text='Загрузить список книг из файла', command = self.ui_load_books)
+        self.load_button.pack(pady=5)
+        
         #обновляем список книг на экране при старте
         self.update_listbox()
         
@@ -143,9 +147,18 @@ class LibraryApp:
             #Для удобства очищаем поля ввода
             self.title_entry.delete(0, tk.END)
             self.author_entry.delete(0, tk.END)
-            self.author_entry.delete(0, tk.END)
+            self.year_entry.delete(0, tk.END)
         else:
             messagebox.showwarning('Ошибка', 'Книга уже добавлена в библиотеку')
+            
+    #метод для загрузки книг из фала json        
+    def ui_load_books(self):
+        self.library.books = []
+        self.library.load_from_file()
+        self.update_listbox()
+        
+        messagebox.showinfo('Готово', 'Список книг успешно загружен из файла')
+        
         
     #метод для добавления заметок
     def ui_open_notes(self):
