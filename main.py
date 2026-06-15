@@ -1,6 +1,7 @@
 import json
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 
 class Book:
     def __init__(self, title: str, author: str, year: int, is_read: bool = False):
@@ -59,9 +60,10 @@ class Library:
         with open(self.file_path, 'w', encoding='utf-8') as f:
             json.dump(data_to_save, f, ensure_ascii=False, indent=4)
     
-    def load_from_file(self):
+    def load_from_file(self, custom_path: str = None):
+        path_to_open = custom_path if custom_path else self.file_path
         try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
+            with open(path_to_open, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 for book_dict in data:
                     new_book = Book(title=book_dict['title'], 
@@ -70,6 +72,9 @@ class Library:
                                     is_read=book_dict['is_read'])
                     new_book.notes = book_dict.get('notes', [])
                     self.books.append(new_book)
+                    
+                if custom_path:
+                    self.file_path = custom_path
                 
         except FileNotFoundError:
             print('Создана новая библиотека')
@@ -79,6 +84,7 @@ class Library:
 class LibraryApp:
     
     def __init__(self, root):
+        
         self.root = root
         self.root.title('Моя Библиотека')
         self.root.geometry('500x400')
@@ -153,8 +159,18 @@ class LibraryApp:
             
     #метод для загрузки книг из фала json        
     def ui_load_books(self):
+        
+        #диалоговое окно для выбора JSON-файла
+        selected_file = filedialog.askopenfilename(
+            title='Выберите файл библиотеки',
+            filetypes=[('JSON файлы', '*.json'), ('Все файлы', '*.*')]
+        )
+        
+        if not selected_file:
+            return
+        
         self.library.books = []
-        self.library.load_from_file()
+        self.library.load_from_file(custom_path=selected_file)
         self.update_listbox()
         
         messagebox.showinfo('Готово', 'Список книг успешно загружен из файла')
