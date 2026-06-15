@@ -8,8 +8,14 @@ class Book:
         self.author = author
         self.year = year
         self.is_read = is_read
+        self.notes = []
+    
     def __str__(self) -> str:
         return f'{self.author} --- {self.title} ({self.year}) [{self.is_read}]'
+    
+    def add_note(self, text: str):
+        if text.strip():
+            self.notes.append(text.strip())
 
 class Library:
 
@@ -36,7 +42,7 @@ class Library:
     def mark_as_read(self, title: str):
         for book in self.books:
             if book.title == title:
-                book.is_read = not is_read
+                book.is_read = not book.is_read
                 print('Данные о книги успешно изменены: прочитано')
                 return            
         print('Не нашлось книги с таким названием')
@@ -44,8 +50,12 @@ class Library:
     def save_to_file(self):
         data_to_save = []
         for book in self.books:
-            data_to_save.append({'title': book.title, 'author': book.author,
-                               'year': book.year, 'is_read': book.is_read})
+            data_to_save.append({'title': book.title, 
+                                 'author': book.author,
+                                 'year': book.year, 
+                                 'is_read': book.is_read,
+                                 'notes': book.notes})
+            
         with open(self.file_path, 'w', encoding='utf-8') as f:
             json.dump(data_to_save, f, ensure_ascii=False, indent=4)
     
@@ -54,14 +64,18 @@ class Library:
             with open(self.file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 for book_dict in data:
-                    new_book = Book(title=book_dict['title'], author=book_dict['author'], 
-                                year=book_dict['year'], is_read=book_dict['is_read'])
+                    new_book = Book(title=book_dict['title'], 
+                                    author=book_dict['author'], 
+                                    year=book_dict['year'], 
+                                    is_read=book_dict['is_read'])
+                    new_book.notes = book_dict.get('notes', [])
                     self.books.append(new_book)
                 
         except FileNotFoundError:
             print('Создана новая библиотека')
             data = []
             return data
+        
 class LibraryApp:
     
     def __init__(self, root):
@@ -105,6 +119,10 @@ class LibraryApp:
         self.add_button = tk.Button(root, text='Добавить книгу', command=self.ui_add_book)
         self.add_button.pack(pady=10)
         
+        #кнопка для открытия и добавления заметок (окошко)
+        self.notes_button = tk.Button(root, text='Заметки к книге', command=self.ui_open_notes)
+        self.notes_button.pack(pady=5)
+        
         #обновляем список книг на экране при старте
         self.update_listbox()
         
@@ -122,11 +140,63 @@ class LibraryApp:
             #Если метод вернул True (это флаг, указанный в методе класса Library.add_book)
             self.library.save_to_file()
             self.update_listbox()
+            #Для удобства очищаем поля ввода
+            self.title_entry.delete(0, tk.END)
+            self.author_entry.delete(0, tk.END)
+            self.author_entry.delete(0, tk.END)
         else:
             messagebox.showwarning('Ошибка', 'Книга уже добавлена в библиотеку')
         
-        self.library.save_to_file()
-        self.update_listbox()
+    #метод для добавления заметок
+    def ui_open_notes(self):
+        
+        #получаем индекс выбранной книги в списке
+        selected_index = self.books_listbox.curselection()
+        
+        if not selected_index:
+            messagebox.showwarning('Ошибка', 'Вы не выбрали книгу')
+            return
+        
+        book = self.library.books[selected_index[0]]
+        
+        #Логика всплывающего окна (Toplevel)
+        notes_window = tk.Toplevel(self.root)
+        notes_window.title(f'Заметки {book.title}')
+        notes_window.geometry('400x450')
+        
+        #уже существующие заметки
+        notes_listbox = tk.Listbox(notes_window, width=50, height=12)
+        notes_listbox.pack(pady=10)
+        
+        #функция для обновления списка заметок внутри окна
+        def update_notes_listbox():
+            notes_listbox.delete(0, tk.END)
+            for note in book.notes:
+                notes_listbox.insert(tk.END, note)
+        update_notes_listbox() #сразу обновляем список заметок внутри окна
+        
+        #поле ввода новой заметки
+        
+        tk.Label(notes_window, text='Добавить новую заметку по книге:').pack()
+        note_entry = tk.Entry(notes_window, font='Arial 12', width=38)
+        note_entry.pack(pady=5)
+        
+        #функция сохраненя заметки
+        
+        def save_new_note():
+            text = note_entry.get()
+            if text.strip():
+                book.add_note(text)
+                self.library.save_to_file()
+                update_notes_listbox()
+                note_entry.delete(0, tk.END)
+            else:
+                messagebox.showwarning('Ошибка', 'Нельзя добавить пустую заметку')
+                
+        #кнопка для сохранения заметки
+        
+        save_button = tk.Button(notes_window, text='Сохранить заметку', command=save_new_note)
+        save_button.pack(pady=10)
         
     #метод для обновления. Он очищает список на экране и заново выводит актуальные книжки     
     def update_listbox(self):
