@@ -200,7 +200,8 @@ class LibraryApp:
         
     #Метод для ручного сохранения текущего состояния в файл
     def ui_save_books(self):
-        
+        self.library.save_to_file()
+        messagebox.showinfo('Готово', 'Все данные успешно сохранены в файл')
         
         
     #метод для добавления заметок
