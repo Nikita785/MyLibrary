@@ -80,14 +80,14 @@ class Library:
                                     author=book_dict['author'], 
                                     year=book_dict['year'], 
                                     is_read=book_dict['is_read'])
-                    new_book.notes = book_dict.get('notes', [])
-                    self.books.append(new_book)
-                    counter_added += 1
+                        new_book.notes = book_dict.get('notes', [])
+                        self.books.append(new_book)
+                        counter_added += 1
                     
-                    if custom_path:
-                        self.file_path = custom_path
+                if custom_path:
+                    self.file_path = custom_path
                         
-                    return counter_added
+                return counter_added
                 
         except FileNotFoundError:
             print('Создана новая библиотека')
