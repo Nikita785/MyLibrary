@@ -61,20 +61,33 @@ class Library:
             json.dump(data_to_save, f, ensure_ascii=False, indent=4)
     
     def load_from_file(self, custom_path: str = None):
+        
         path_to_open = custom_path if custom_path else self.file_path
+        
         try:
             with open(path_to_open, 'r', encoding='utf-8') as f:
                 data = json.load(f)
+                counter_added = 0 #счётчик для новых добавленных книг
+                
                 for book_dict in data:
-                    new_book = Book(title=book_dict['title'], 
+                    is_duplicate = False #проверка каждой вносимой из файла книги на дубликат
+                    for non_duplicate in self.books:
+                        if non_duplicate.title == book_dict['title'] and non_duplicate.author == book_dict['author']:
+                            is_duplicate = True
+                            break
+                    if not is_duplicate:
+                        new_book = Book(title=book_dict['title'], 
                                     author=book_dict['author'], 
                                     year=book_dict['year'], 
                                     is_read=book_dict['is_read'])
                     new_book.notes = book_dict.get('notes', [])
                     self.books.append(new_book)
+                    counter_added += 1
                     
-                if custom_path:
-                    self.file_path = custom_path
+                    if custom_path:
+                        self.file_path = custom_path
+                        
+                    return counter_added
                 
         except FileNotFoundError:
             print('Создана новая библиотека')
@@ -177,11 +190,15 @@ class LibraryApp:
         if not selected_file:
             return
         
-        self.library.books = []
-        self.library.load_from_file(custom_path=selected_file)
+        #вызываем загрузку и получаем количество добавленных книг
+        added_count = self.library.load_from_file(custom_path=selected_file)
         self.update_listbox()
+        self.library.save_to_file() #автоматически сохраняем объединённую библиотеку
         
-        messagebox.showinfo('Готово', 'Список книг успешно загружен из файла')
+        if added_count > 0:
+            messagebox.showinfo('Готово', f'Успешно добавлено новых книг из файла: {added_count}')
+        else:
+            messagebox.showinfo('Не удалось выполнить', f'Все книги из файла уже содержатся в библиотеке')
         
     #метод для смены статуса прочтения выбранной книги
     def ui_mark_as_read(self):
